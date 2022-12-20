@@ -61,9 +61,17 @@ pub async fn visit(
 
 #[tokio::main]
 async fn main() {
+    //let ext = tokio::task::spawn_blocking(move || {
+    //    let mut ext = String::new();
+    //    println!("Enter the Folder Name:");
+    //    println!("The Folder is, {}", ext);
+    //    ext
+    //});
+    //let ext = ext.await.unwrap();
     let url: &str = "209.127.152.40:21";
-    let ext: &str = "/home/yakaman/GLBX-20221130-VPX9AXX459/";
-    let path_vec = visit(ext).await.unwrap();
+    //let ext: &str = "/home/yakaman/GLBX-20221130-VPX9AXX459/";
+    let ext: &str = "/root/data/dbz/"
+    let path_vec = visit(&ext).await.unwrap();
     let session: Session = SessionBuilder::new()
         .known_node("172.104.21.214:9042")
         .build()
@@ -74,6 +82,7 @@ async fn main() {
     let mut counter = 0;
     println!("done create keyspace and table");
     for entry in path_vec.iter() {
+        break;
         counter += 1;
         println!("{:?}", entry.path());
         println!("{:?}", counter);
@@ -92,7 +101,7 @@ async fn main() {
             let ts_in_delta: i64 = i64::from(trade.ts_in_delta);
             let sequence: i64 = i64::from(trade.sequence);
             let id_uuid = Uuid::new_v4();
-            println!("{},{},{},{},{},{},{},{},{},{},{},{},entry path: {}, counter: {}, commodity, id_uuid, price, size, action, hd, side, flags, depth, ts_recv, ts_in_delta, sequence);
+            println!("{},{},{},{},{},{},{},{},{},{},{},{},entry path:, {}, counter: {}", commodity, id_uuid, price, size, action, hd, side, flags, depth, ts_recv, ts_in_delta, sequence, entry.path().display(), counter);
             session.execute(&trade_prepare,(&commodity, id_uuid, hd, price, size, action, side, flags, depth, ts_recv, ts_in_delta, sequence)).await.unwrap();
         }
     }
