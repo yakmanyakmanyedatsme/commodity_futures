@@ -70,7 +70,7 @@ async fn main() {
     //let ext = ext.await.unwrap();
     let url: &str = "209.127.152.40:21";
     //let ext: &str = "/home/yakaman/GLBX-20221130-VPX9AXX459/";
-    let ext: &str = "/root/data/dbz/"
+    let ext: &str = "/root/data/dbz/";
     let path_vec = visit(&ext).await.unwrap();
     let session: Session = SessionBuilder::new()
         .known_node("172.104.21.214:9042")
@@ -82,7 +82,6 @@ async fn main() {
     let mut counter = 0;
     println!("done create keyspace and table");
     for entry in path_vec.iter() {
-        break;
         counter += 1;
         println!("{:?}", entry.path());
         println!("{:?}", counter);
