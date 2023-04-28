@@ -81,7 +81,7 @@ async fn main() {
     //});
     //let ext = ext.await.unwrap();
     let url: &str = "209.127.152.40:21";
-    let ext: &str = "~/root/data/dbz/";
+    let ext: &str = "/root/data/dbz/";
     //"/root/data/dbz/";
     let path_vec = visit(&ext).await.unwrap();
     let session: Session = SessionBuilder::new()
