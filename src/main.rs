@@ -6,7 +6,7 @@ extern crate tokio;
 use std::{str,env};
 use std::io::Write;
 use std::path::Path;
-use tokio::fs::{self, DirEntry,File};
+use tokio::fs::{self, DirEntry,File,OpenOptions};
 use tokio::io::{self,AsyncReadExt, AsyncBufReadExt, BufReader, AsyncWriteExt};
 use tokio_stream::{self as stream};
 use futures::{self, Stream, StreamExt};
@@ -91,14 +91,19 @@ async fn main() {
     let url: &str = "209.127.152.40:21";
     let completed_file = std::path::Path::new(cplt);//"/root/data/complete.txt"
     if fs::metadata(completed_file).await.is_ok() {
-        let mut file_cplt = File::open(completed_file).await.unwrap();
+        let mut file_cplt = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .append(false).open(completed_file).await.unwrap();
         let reader = BufReader::new(file_cplt);
         let mut lines = reader.lines();
         while let Some(mut line) = lines.next_line().await.unwrap() {
-            completed_paths.push(line.to_string());
+            completed_paths.push(line.to_string().to_owned());
         }
     }else {
         let mut file_cplt = File::create(completed_file).await.unwrap();
+        println!("{:?}", "else activated");
     }
 
     //"/root/data/dbz/";
@@ -151,8 +156,15 @@ async fn main() {
             //println!("{},{},{},{},{},{},{},{},{},{},{},{},entry path:, {}, counter: {}", commodity, id_uuid, price, size, action, hd, side, flags, depth, ts_recv, ts_in_delta, sequence, entry.path().display(), counter);
             session.execute(&trade_prepare,(&commodity, id_uuid, hd, price, size, action, side, flags, depth, ts_recv, ts_in_delta, sequence)).await.unwrap();
         }
-        fs.write(completed_file, &entry.path().to_str().unwrap().as_bytes().to_owned()).await?;
+        completed_paths.push(entry.path().to_str().unwrap().to_string().to_owned());
         session.query(COUNT_OBVS, &[]).await.unwrap();
         println!("{:?}",counter);
-        }
+        let mut file_cplt = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(false)
+        .append(false).open(completed_file).await.unwrap();
+        file_cplt.write_all(completed_paths.join("\n").as_bytes()).await.unwrap();
     }
+        print!("{:?}",completed_paths.join("\n"));
+}
