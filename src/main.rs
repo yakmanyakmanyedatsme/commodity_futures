@@ -3,9 +3,11 @@
 #![allow(unused_variables)]
 extern crate tokio;
 
-use std::str;
+use std::{str,env};
+use std::io::Write;
 use std::path::Path;
-use tokio::fs::{self, DirEntry};
+use tokio::fs::{self, DirEntry,File};
+use tokio::io::{self,AsyncReadExt, AsyncBufReadExt, BufReader, AsyncWriteExt};
 use tokio_stream::{self as stream};
 use futures::{self, Stream, StreamExt};
 use curl::easy::Easy;
@@ -80,8 +82,25 @@ async fn main() {
     //    ext
     //});
     //let ext = ext.await.unwrap();
+    let args:Vec<String> = env::args().collect();
+    let ext: &str = &args[1];//"/root/data/dbz/";
+    let cplt: &str = &args[2];
+    println!("{:?}",ext);
+    println!("{:?}", cplt);
+    let mut completed_paths: Vec<String> = Vec::new();
     let url: &str = "209.127.152.40:21";
-    let ext: &str = "/root/data/dbz/";
+    let completed_file = std::path::Path::new(cplt);//"/root/data/complete.txt"
+    if fs::metadata(completed_file).await.is_ok() {
+        let mut file_cplt = File::open(completed_file).await.unwrap();
+        let reader = BufReader::new(file_cplt);
+        let mut lines = reader.lines();
+        while let Some(mut line) = lines.next_line().await.unwrap() {
+            completed_paths.push(line.to_string());
+        }
+    }else {
+        let mut file_cplt = File::create(completed_file).await.unwrap();
+    }
+
     //"/root/data/dbz/";
     let path_vec = visit(&ext).await.unwrap();
     let session: Session = SessionBuilder::new()
@@ -96,6 +115,11 @@ async fn main() {
     println!("done create keyspace and table");
     for entry in path_vec.iter() {
         counter += 1;
+        if completed_paths.contains(&entry.path().to_str().unwrap().to_string()){
+            println!("Skipped {:?}", entry.path());
+            println!("{:?}",counter);
+            continue
+        }
         println!("{:?}", entry.path());
         //println!("{:?}", counter);
         let dbz = Dbz::from_file(entry.path()).unwrap();
@@ -127,8 +151,9 @@ async fn main() {
             //println!("{},{},{},{},{},{},{},{},{},{},{},{},entry path:, {}, counter: {}", commodity, id_uuid, price, size, action, hd, side, flags, depth, ts_recv, ts_in_delta, sequence, entry.path().display(), counter);
             session.execute(&trade_prepare,(&commodity, id_uuid, hd, price, size, action, side, flags, depth, ts_recv, ts_in_delta, sequence)).await.unwrap();
         }
+        let mut file_cplt = File::open(completed_file).await.unwrap();
+        file_cplt.write_all(&entry.path().to_str().unwrap().as_bytes().to_owned());
         session.query(COUNT_OBVS, &[]).await.unwrap();
         println!("{:?}",counter);
-
+        }
     }
-}
