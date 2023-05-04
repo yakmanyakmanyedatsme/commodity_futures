@@ -151,8 +151,7 @@ async fn main() {
             //println!("{},{},{},{},{},{},{},{},{},{},{},{},entry path:, {}, counter: {}", commodity, id_uuid, price, size, action, hd, side, flags, depth, ts_recv, ts_in_delta, sequence, entry.path().display(), counter);
             session.execute(&trade_prepare,(&commodity, id_uuid, hd, price, size, action, side, flags, depth, ts_recv, ts_in_delta, sequence)).await.unwrap();
         }
-        let mut file_cplt = File::open(completed_file).await.unwrap();
-        file_cplt.write_all(&entry.path().to_str().unwrap().as_bytes().to_owned());
+        fs.write(completed_file, &entry.path().to_str().unwrap().as_bytes().to_owned()).await?;
         session.query(COUNT_OBVS, &[]).await.unwrap();
         println!("{:?}",counter);
         }
